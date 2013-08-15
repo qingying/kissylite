@@ -3,7 +3,8 @@
  * selector
  * @author tingbao.peng@gmail.com
  */
- KISSY.add('dom/selector',function(S){
+ KISSY.add('dom/selector',function(S,DOM){
+
 	function getSelector(selector,context,fun){
 		/*set body as the default context*/
 		if(!context){
@@ -14,14 +15,10 @@
 			selector = selector.replace(/^\s+|\s+$/g,'');
 			return context[fun](selector);
 		}
-		/*node*/
-		if(selector.nodeType==1){
-			return selector;
-		}
-		/**/
+
 		return selector;
 	}
-	var dom = {
+     S.mix(DOM,{
 		/**
         * Accepts a string containing a CSS selector which is then used to match a set of elements.
         * @param {String|HTMLElement[]} selector
@@ -50,7 +47,7 @@
 		/**
         * Reduce the set of matched elements to those that match the selector or pass the function's test.
         * @param {String|HTMLElement[]} selector Matched elements
-        * @param {String|Function} filter Selector string or filter function
+        * @param {String|Function} filter function ,delete filter Selector string param in kissy dom
         * @param {String|HTMLElement[]|HTMLDocument} [context] Context under which to find matched elements
         * @return {HTMLElement[]}
         */
@@ -66,18 +63,28 @@
 				return filterElems;
 				
 			}
-			returnn [];
+			return [];
 		},
 		/**
          * Returns true if the matched element(s) pass the filter test
          * @param {String|HTMLElement[]} selector Matched elements
-         * @param {String|Function} filter Selector string or filter function
+         * @param {String|Function}filter function,delete filter Selector string param in kissy dom
          * @param {String|HTMLElement[]|HTMLDocument} [context] Context under which to find matched elements
          * @member KISSY.DOM
          * @return {Boolean}
          */
-        test: function (selector, filter, context) {
-		
+        test: function (selector, fun, context) {
+            var elems = getSelector(selector,context,'querySelectorAll');
+            for(var i=0;i<elems.length;i++){
+                if(!fun(elems[i])){
+                    return false;
+                }
+            }
+            return true;
 		}
-	}
+	});
+
+    return DOM;
+ },{
+         requires:['./api']
  });
