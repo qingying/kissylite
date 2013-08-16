@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=gbk"/>
+    <title></title>
+    <script src="http://a.tbcdn.cn/s/kissy/1.3.0/seed-min.js"></script>
+     <script src="../../dom/sub_module/create.js"></script>
+</head>
+<body>
+<input type="checkbox"/>
+    <script>
+        KISSY.use('dom/create',function(S,DOM){
+            var newel = DOM.create('div',{
+                'cssText':'display:inline-block'
+            });
+            console.log(newel);
+            document.body.appendChild(newel);
+            document.querySelector('input').checked='checked'
+        });
+    </script>
+</body>
+</html>

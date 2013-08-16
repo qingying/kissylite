@@ -1,9 +1,8 @@
 /**
- * @ignore
- * selector
+ * dom-selector
  * @author tingbao.peng@gmail.com
  */
-KISSY.add('dom/selector', function (S, DOM) {
+KISSY.add('dom/selector', function (S) {
 
     function getSelector(selector, context, fun) {
         /*set body as the default context*/
@@ -11,15 +10,16 @@ KISSY.add('dom/selector', function (S, DOM) {
             context = document.body;
         }
         /*css selector*/
-        if (typeof(selector) == 'string') {
+        if (selector && typeof(selector) == 'string') {
             selector = selector.replace(/^\s+|\s+$/g, '');
-            return context[fun](selector);
+            var result = context[fun](selector);
+            return result;
         }
 
         return selector;
     }
 
-    S.mix(DOM, {
+    var SELECTOR =  {
         /**
          * Accepts a string containing a CSS selector which is then used to match a set of elements.
          * @param {String|HTMLElement[]} selector
@@ -30,7 +30,7 @@ KISSY.add('dom/selector', function (S, DOM) {
          * @return {HTMLElement} The first of found HTMLElements
          */
         get:function (selector, context) {
-            getSelector(selector, context, 'querySelector');
+            return getSelector(selector, context, 'querySelector');
         },
 
         /**
@@ -43,7 +43,7 @@ KISSY.add('dom/selector', function (S, DOM) {
          * @return {HTMLElement[]} The array of found HTMLElements
          */
         query:function (selector, context) {
-            getSelector(selector, context, 'querySelectorAll');
+            return getSelector(selector, context, 'querySelectorAll');
         },
         /**
          * Reduce the set of matched elements to those that match the selector or pass the function's test.
@@ -83,9 +83,7 @@ KISSY.add('dom/selector', function (S, DOM) {
             }
             return true;
         }
-    });
+    };
 
-    return DOM;
-}, {
-    requires:['./api']
+    return  SELECTOR;
 });
