@@ -12,7 +12,10 @@ KISSY.add('dom/class', function (S) {
         if (selector.nodeType && selector.nodeType == 1) {
             return [selector];
         }
-        return selector;
+        if(selector.length && selector.length>0 && selector[0].nodeType && selector[0].nodeType==1){
+            return selector;
+        }
+        return [];
     }
 
     function getClsArr(clsStr) {

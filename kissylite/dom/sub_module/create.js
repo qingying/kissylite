@@ -365,7 +365,7 @@ KISSY.add('dom/create', function (S) {
                     clone,
                     elemNodeType;
 
-                if (!elem)) {
+                if (!elem) {
                     return null;
                 }
                 elem = elem[0];

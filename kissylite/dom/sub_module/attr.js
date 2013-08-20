@@ -43,7 +43,7 @@
             scrollTop: 1,
             scrollLeft: 1
         };
-    var R_RETURN = /\r/g,
+    var R_RETURN = /\r/g;
     var ATTR = {
         /**
          * Get the value of a property for the first element in the set of matched elements.
@@ -66,7 +66,7 @@
                 S.each(name, function (v, k) {
                     ATTR.prop(elems, k, v);
                 });
-                return;
+                return undefined;
             }
             name = propFix[ name ] || name;
             //setter
@@ -78,11 +78,10 @@
             } else {
             //getter
                 if (elems.length) {
-                    return return elem[0][name];
+                    return elem[0][name];
                 }
             }
             return undefined;
-            },  
         },
         /**
         * Whether one of the matched elements has specified property name
@@ -148,7 +147,7 @@
                 for (var k in name) {
                     ATTR.attr(els, k, name[k]);
                 }
-                return;
+                return undefined;
             }
 
             // attr functions
@@ -244,7 +243,7 @@
                             ret == null ? '' : ret;
                     }
     
-                    return;
+                    return ret;
                 }
     
                 
@@ -302,7 +301,7 @@
                 }
                 return undefined;
             },
-    },
+    };
     
     
     return ATTR;
