@@ -155,7 +155,7 @@ KISSY.add('dom/style', function (S) {
     }
 
     function getNumber(str){
-        return str.replace(/[^\d]/g,'');
+        return parseFloat(str);
     }
     var STYLE = {
         /**
@@ -361,7 +361,7 @@ KISSY.add('dom/style', function (S) {
         * @return {Number}
         */
         innerWidth: function(selector){
-                var el = getEl(selector)[0];
+               var el = getEl(selector)[0];
                if(!el){
                    return 0;
                }
@@ -370,8 +370,98 @@ KISSY.add('dom/style', function (S) {
               var paddingLeft = getNumber(style.getPerportyValue('padding-left'));
               var paddingRight = getNumber(style.getPerportyValue('padding-right'));
              return width+paddingLeft+paddingRight;
+        },
+        /**
+        * Get the current computed height for the first element in the set of matched elements, including padding but not border.
+        * @method
+        * @param {HTMLElement[]|String|HTMLElement} selector Matched elements
+        * @return {Number}
+        */
+        innerHeight: function(selector){
+            var el = getEl(selector)[0];
+               if(!el){
+                   return 0;
+               }
+              var style = _getComputedStyle(el);
+              var width = getNumber(style.getPerportyValue('height'));
+              var paddingLeft = getNumber(style.getPerportyValue('padding-top'));
+              var paddingRight = getNumber(style.getPerportyValue('padding-bottom'));
+             return width+paddingLeft+paddingRight;
+        },
+        /**
+        *  Get the current computed width for the first element in the set of matched elements, including padding and border, and optionally margin.
+        * @method
+        * @param {HTMLElement[]|String|HTMLElement} selector Matched elements
+        * @param {Boolean} [includeMargin] A Boolean indicating whether to include the element's margin in the calculation.
+        * @return {Number}
+        */
+        outerWidth: function(selector){
+            var el = getEl(selector)[0];
+              if(!el){
+                  return 0;
+              }
+             var style = _getComputedStyle(el);
+             var width = getNumber(style.getPerportyValue('width'));
+             var paddingLeft = getNumber(style.getPerportyValue('padding-left'));
+             var borderLeft = getNumber(style.getPerportyValue('border-left'));
+             var marginLeft = getNumber(style.getPerportyValue('margin-left'));
+             var paddingRight = getNumber(style.getPerportyValue('padding-right'));
+             var borderRight = getNumber(style.getPerportyValue('border-right'));
+             var marginRight = getNumber(style.getPerportyValue('margin-right'));
+            return width+paddingLeft+borderLeft+marginLeft+paddingRight+borderRight+marginRight;
+        },
+        /**
+        * Get the current computed height for the first element in the set of matched elements, including padding, border, and optionally margin.
+        * @method
+        * @param {HTMLElement[]|String|HTMLElement} selector Matched elements
+        * @param {Boolean} [includeMargin] A Boolean indicating whether to include the element's margin in the calculation.
+        * @return {Number}
+        */
+        outerHeight:function(){
+            var el = getEl(selector)[0];
+              if(!el){
+                  return 0;
+              }
+             var style = _getComputedStyle(el);
+             var height = getNumber(style.getPerportyValue('height'));
+             var paddingTop = getNumber(style.getPerportyValue('padding-top'));
+             var borderTop = getNumber(style.getPerportyValue('border-top'));
+             var marginTop = getNumber(style.getPerportyValue('margin-top'));
+             var paddingBottom = getNumber(style.getPerportyValue('padding-bottom'));
+             var borderBottom = getNumber(style.getPerportyValue('border-bottom'));
+             var marginBottom = getNumber(style.getPerportyValue('margin-bottom'));
+            return width+paddingTop+borderTop+marginTop+paddingBottom+borderBottom+marginBottom;
+        },
+        /**
+        * Get the current computed width for the first element in the set of matched elements.
+        * or
+        * Set the CSS width of each element in the set of matched elements.
+        * @method
+        * @param {HTMLElement[]|String|HTMLElement} selector Matched elements
+        * @param {String|Number} [value]
+        * An integer representing the number of pixels, or an integer along with an optional unit of measure appended (as a string).
+        * @return {Number|undefined}
+        */
+        width: function(selector,value){
+            var els = getEl(selector);
+            var ret = STYLE.css(selector,'width',value);
+            return ret;
+        },
+        /**
+        * Get the current computed height for the first element in the set of matched elements.
+        * or
+        * Set the CSS height of each element in the set of matched elements.
+        * @method
+        * @param {HTMLElement[]|String|HTMLElement} selector Matched elements
+        * @param {String|Number} [value]
+        * An integer representing the number of pixels, or an integer along with an optional unit of measure appended (as a string).
+        * @return {Number|undefined}
+        */
+        height: function(selector,height){
+            var els = getEl(selector);
+            var ret = STYLE.css(selector,'height',value);
+            return ret;
         }
-
 
     };
 
