@@ -4,7 +4,19 @@
  */
 
 KISSY.add('dom/style', function (S) {
-
+    function getEl(selector, context) {
+        var doc = context || document.body;
+        if (selector && typeof(selector) == 'string') {
+            return doc.querySelectorAll(selector);
+        }
+        if (selector.nodeType && selector.nodeType == 1) {
+            return [selector];
+        }
+        if (selector.length && selector.length > 0 && selector[0].nodeType && selector[0].nodeType == 1) {
+            return selector;
+        }
+        return [];
+    }
     var cssProps = {
             'float':'cssFloat'
         };
@@ -25,20 +37,6 @@ KISSY.add('dom/style', function (S) {
 
     function UA(name){
         return navigator.useAgent.indexof(name)!=-1;
-    }
-
-    function getEl(selector, context) {
-        var doc = context || document.body;
-        if (selector && typeof(selector) == 'string') {
-            return doc.querySelectorAll(selector);
-        }
-        if (selector.nodeType && selector.nodeType == 1) {
-            return [selector];
-        }
-        if (selector.length && selector.length > 0 && selector[0].nodeType && selector[0].nodeType == 1) {
-            return selector;
-        }
-        return [];
     }
 
     function camelCase(name) {
