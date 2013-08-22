@@ -49,7 +49,7 @@ KISSY.add('dom/style', function (S) {
         var style,
             ret;
 
-        if (elem.nodeType === 3 || elem.nodeType === 8 || !(style = elem.style) {
+        if (elem.nodeType === 3 || elem.nodeType === 8 || !(style = elem.style)) {
             return undefined;
         }
 
@@ -132,7 +132,7 @@ KISSY.add('dom/style', function (S) {
         }
 
         return val;
-    };
+    }
     var defaultDisplay = {};
 
     function getDefaultDisplay(tagName) {
