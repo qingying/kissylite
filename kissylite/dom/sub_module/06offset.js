@@ -75,7 +75,7 @@ KISSY.add('dom/offset', function (S) {
             if (!(el = getEl(selector)[0])) {
                 return
             }
-            if (!(container = getEl(container))) {
+            if (!(container = getEl(container)[0])) {
                 container = el.ownerDocument.defaultView;
             }
             if (S.isPlainObject(alignWithTop)) {
@@ -84,6 +84,108 @@ KISSY.add('dom/offset', function (S) {
                 alignWithTop = alignWithTop.alignWithTop;
             }
             allowHorizontalScroll = allowHorizontalScroll === undefined ? true : allowHorizontalScroll;
+            
+            var containerScroll,
+                ww,
+                wh;
+            var elCss = window.getComputedStyle(el);
+            var ew = elCss.width;
+            var eh = elCss.height;
+            var elOffset = {
+                left: el.getBoundingClientRect().left,
+                top:el.getBoundingClientRect().top
+            };
+            var diffTop,diffBottom,containerOffset;
+            if(container==window){
+                ww = window.innerWidth;
+                wh = window.innerHieght;
+                containerScroll = {
+                    left: window.scrollX,
+                    top: window.scrollY
+                };
+                diffTop = {
+                    left: elOffset.left - containerScroll.left,
+                    top: elOffset.top - containerScroll.top
+                }
+                diffBottom = {
+                    left: el.Offset.left+ew - (containerScroll.left+ww),
+                    top: ellOffset.top+eh-(containerScroll.top+wh)
+                }
+            }else{
+                ww = container.getBoundingClientRect().width;
+                wh = container.getBoundingClientRect().height;
+                containerScroll = {
+                    left: container.getBoundingClientRect().left,
+                    top:container.getBoundingClientRect().top
+                }
+                containerOffset = container.getBoundingClientRect();
+                containerCss = window.getComputedStyle(container);
+                diffTop = {
+                    left: elemOffset.left - (containerOffset.left +
+                        (parseFloat(containerCss.borderLeftWidth) || 0)),
+                    top: elemOffset.top - (containerOffset.top +
+                        parseFloat(containerCss.borderLeftHeight)) || 0))
+                };
+                diffBottom = {
+                    left: elemOffset.left + ew -
+                        (containerOffset.left + cw +
+                            (parseFloat(containerCss.borderLeftWidth) || 0)),
+                    top: elemOffset.top + eh -
+                        (containerOffset.top + ch +
+                            (parseFloat(containerCss.borderLeftHeight) || 0))
+                };
+            }
+            if (onlyScrollIfNeeded) {
+                    if (diffTop.top < 0 || diffBottom.top > 0) {
+                        // 强制向上
+                        if (alignWithTop === true) {
+                            OFFSET.scrollTop(container, containerScroll.top + diffTop.top);
+                        } else if (alignWithTop === false) {
+                            OFFSET.scrollTop(container, containerScroll.top + diffBottom.top);
+                        } else {
+                            // 自动调整
+                            if (diffTop.top < 0) {
+                                OFFSET.scrollTop(container, containerScroll.top + diffTop.top);
+                            } else {
+                                OFFSET.scrollTop(container, containerScroll.top + diffBottom.top);
+                            }
+                        }
+                    }
+                } else {
+                    alignWithTop = alignWithTop === undefined ? true : !!alignWithTop;
+                    if (alignWithTop) {
+                        OFFSET.scrollTop(container, containerScroll.top + diffTop.top);
+                    } else {
+                        OFFSET.scrollTop(container, containerScroll.top + diffBottom.top);
+                    }
+                }
+
+                if (allowHorizontalScroll) {
+                    if (onlyScrollIfNeeded) {
+                        if (diffTop.left < 0 || diffBottom.left > 0) {
+                            // 强制向上
+                            if (alignWithTop === true) {
+                                OFFSET.scrollLeft(container, containerScroll.left + diffTop.left);
+                            } else if (alignWithTop === false) {
+                                OFFSET.scrollLeft(container, containerScroll.left + diffBottom.left);
+                            } else {
+                                // 自动调整
+                                if (diffTop.left < 0) {
+                                    OFFSET.scrollLeft(container, containerScroll.left + diffTop.left);
+                                } else {
+                                    OFFSET.scrollLeft(container, containerScroll.left + diffBottom.left);
+                                }
+                            }
+                        }
+                    } else {
+                        alignWithTop = alignWithTop === undefined ? true : !!alignWithTop;
+                        if (alignWithTop) {
+                            OFFSET.scrollLeft(container, containerScroll.left + diffTop.left);
+                        } else {
+                            OFFSET.scrollLeft(container, containerScroll.left + diffBottom.left);
+                        }
+                    }
+                }
         },
         /**
          * Get the width of document
