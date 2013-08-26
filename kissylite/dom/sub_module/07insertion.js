@@ -1,7 +1,7 @@
 /**
- *dom-offset
- * @author tingbao.peng@gmail.com
- */
+  *dom-offset
+  * @author tingbao.peng@gmail.com
+  */
 KISSY.add('dom/insertion', function (S) {
     function getEl(selector, context) {
         var doc = context || document.body;
