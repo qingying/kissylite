@@ -2,7 +2,7 @@
  *dom-offset
  * @author tingbao.peng@gmail.com
  */
- KISSY.add('dom/insertion',function(S){
+KISSY.add('dom/insertion', function (S) {
     function getEl(selector, context) {
         var doc = context || document.body;
         if (selector && typeof(selector) == 'string') {
@@ -16,11 +16,13 @@
         }
         return [];
     }
-    
+
     var R_SCRIPT_TYPE = /\/(java|ecma)script/i;
-    function isJs(el){
+
+    function isJs(el) {
         return !el.type || R_SCRIPT_TYPE.test(el.type);
     }
+
     function filterScripts(nodes, scripts) {
         var ret = [], i, el, nodeName;
         for (i = 0; nodes[i]; i++) {
@@ -28,7 +30,7 @@
             nodeName = el.getTagName;
             if (el.nodeType == 11) {
                 ret.push.apply(ret, filterScripts(S.makeArray(el.childNodes), scripts));
-            } else if (nodeName === 'script' &&isJs(el)) {
+            } else if (nodeName === 'script' && isJs(el)) {
                 if (el.parentNode) {
                     el.parentNode.removeChild(el)
                 }
@@ -36,7 +38,7 @@
                     scripts.push(el);
                 }
             } else {
-                if (el.nodeType == 1){
+                if (el.nodeType == 1) {
                     var tmp = [],
                         s,
                         j,
@@ -55,7 +57,7 @@
         return ret;
     }
 
-    
+
     // execute script
     function evalScript(el) {
         if (el.src) {
@@ -67,109 +69,154 @@
             }
         }
     }
-    
-    function inserion(newNodes,refNodes,fun){
+
+    function inserion(newNodes, refNodes, fun) {
         newNodes = getEl(newNodes);
-            refNodes = getEl(refNodes);
-            
-            if(refNodes.length && refNodes.length==0){
-                return;
+        refNodes = getEl(refNodes);
+
+        if (refNodes.length && refNodes.length == 0) {
+            return;
+        }
+        var scripts = [];
+        filterScripts(newNodes, scripts);
+        var i, j;
+        var fragment = createDocumentFragment();
+        for (j = 0; j < newNodes.length; j++) {
+            fragment.appendChild(newNodes[j]);
+        }
+
+        for (i = 0; i < refNodes.length; i++) {
+            fun(fragment, refNodes[i]);
+            if (scripts && scripts.length) {
+                S.each(scripts, evalScript);
             }
-            var scripts = [];
-            filterScripts(newNodes,scripts);
-            var i,j;
-            var fragment = createDocumentFragment();
-            for(j=0;j<newNodes.length;j++){
-                fragment.appendChild(newNodes[j]);
-            }
-            
-            for(i=0;i<refNodes.length;i++){
-                fun(fragment,refNodes[i]);
-                if (scripts && scripts.length) {
-                    S.each(scripts, evalScript);
-                }
-            } 
+        }
     }
+
     var INSERTION = {
         /**
-        * Insert every element in the set of newNodes before every element in the set of refNodes.
-        * @param {HTMLElement|HTMLElement[]} newNodes Nodes to be inserted
-        * @param {HTMLElement|HTMLElement[]|String} refNodes Nodes to be referred
-        */
-        before: function (newNodes, refNodes) {
-            insertion(newNodes,refNodes,function(newNosw,refNode){
-                refNode.parentNode.insertBefore(newNode,refNode);
+         * Insert every element in the set of newNodes before every element in the set of refNodes.
+         * @param {HTMLElement|HTMLElement[]} newNodes Nodes to be inserted
+         * @param {HTMLElement|HTMLElement[]|String} refNodes Nodes to be referred
+         */
+        before:function (newNodes, refNodes) {
+            insertion(newNodes, refNodes, function (newNosw, refNode) {
+                refNode.parentNode.insertBefore(newNode, refNode);
             });
         },
         /**
-        * Insert every element in the set of newNodes after every element in the set of refNodes.
-        * @param {HTMLElement|HTMLElement[]} newNodes Nodes to be inserted
-        * @param {HTMLElement|HTMLElement[]|String} refNodes Nodes to be referred
-        */
-        after: function (newNodes, refNodes) {
-            insertion(newNodes,refNodes,function(newNosw,refNode){
-                if(!refNode.parent){
+         * Insert every element in the set of newNodes after every element in the set of refNodes.
+         * @param {HTMLElement|HTMLElement[]} newNodes Nodes to be inserted
+         * @param {HTMLElement|HTMLElement[]|String} refNodes Nodes to be referred
+         */
+        after:function (newNodes, refNodes) {
+            insertion(newNodes, refNodes, function (newNosw, refNode) {
+                if (!refNode.parent) {
                     return;
                 }
-                if(refNode.nextsilbing){
-                    refNode.parentNode.insertBefore(newNode,refNode.nextsilbing);
-                }else{
+                if (refNode.nextsilbing) {
+                    refNode.parentNode.insertBefore(newNode, refNode.nextsilbing);
+                } else {
                     refNode.parentNode.appendChild(newNode);
                 }
             });
         },
         /**
-        * Insert every element in the set of newNodes to the end of every element in the set of parents.
-        * @param {HTMLElement|HTMLElement[]} newNodes Nodes to be inserted
-        * @param {HTMLElement|HTMLElement[]|String} parents Nodes to be referred as parentNode
-        */
-        append: function (newNodes, parents) {
+         * Insert every element in the set of newNodes to the end of every element in the set of parents.
+         * @param {HTMLElement|HTMLElement[]} newNodes Nodes to be inserted
+         * @param {HTMLElement|HTMLElement[]|String} parents Nodes to be referred as parentNode
+         */
+        append:function (newNodes, parents) {
             insertion(newNodes, parents, function (newNode, parent) {
                 parent.appendChild(newNode);
             }, loadScripts);
         },
         /**
-        * Insert every element in the set of newNodes to the beginning of every element in the set of parents.
-        * @param {HTMLElement|HTMLElement[]} newNodes Nodes to be inserted
-        * @param {HTMLElement|HTMLElement[]|String} parents Nodes to be referred as parentNode
-        */
-        prepend: function (newNodes, parents) {
+         * Insert every element in the set of newNodes to the beginning of every element in the set of parents.
+         * @param {HTMLElement|HTMLElement[]} newNodes Nodes to be inserted
+         * @param {HTMLElement|HTMLElement[]|String} parents Nodes to be referred as parentNode
+         */
+        prepend:function (newNodes, parents) {
             insertion(newNodes, parents, function (newNode, parent) {
                 parent.insertBefore(newNode, parent.firstChild);
             });
         },
         /**
-        * Wrap a node around all elements in the set of matched elements
-        * @param {HTMLElement|HTMLElement[]|String} wrappedNodes set of matched elements
-        * @param {HTMLElement|String} wrapperNode html node or selector to get the node wrapper
-        */
-        wrap: function (wrappedNodes, wrapperNode) {
-        
+         * Wrap a node around all elements in the set of matched elements
+         * @param {HTMLElement|HTMLElement[]|String} wrappedNodes set of matched elements
+         * @param {HTMLElement|String} wrapperNode html node or selector to get the node wrapper
+         */
+        wrapAll:function (wrappedNodes, wrapperNode) {
+            var wrap = getEl(wrapperNode)[0].cloneNode(true);
+            var inners = getEl(wrappedNodes);
+            if (inners[0].parentNode) {
+                inners[0].parentNode.insertBefore(wrap, inners[0]);
+                var fragment = createDocumentFragment();
+                for (var j = 0; j < inners.length; j++) {
+                    fragment.appendChild(inners[j]);
+                }
+                wrap.appendChild(fragment);
+            }
+
         },
         /**
-        * Wrap a node around the childNodes of each element in the set of matched elements.
-        * @param {HTMLElement|HTMLElement[]|String} wrappedNodes set of matched elements
-        * @param {HTMLElement|String} wrapperNode html node or selector to get the node wrapper
-        */
-        wrapInner: function (wrappedNodes, wrapperNode) {
-        
+         * Wrap a node around all elements in the set of matched elements
+         * @param {HTMLElement|HTMLElement[]|String} wrappedNodes set of matched elements
+         * @param {HTMLElement|String} wrapperNode html node or selector to get the node wrapper
+         */
+        wrap:function (wrappedNodes, wrapperNode) {
+            var wrap = getEl(wrapperNode)[0].cloneNode(true);
+            var inners = getEl(wrappedNodes);
+            S.each(inners, function (w) {
+                INSERTION.wrapAll(w, wrap);
+            });
+
         },
         /**
-        * Remove the parents of the set of matched elements from the DOM,
-        * leaving the matched elements in their place.
-        * @param {HTMLElement|HTMLElement[]|String} wrappedNodes set of matched elements
-        */
-        unwrap: function (wrappedNodes) {
-        
+         * Wrap a node around the childNodes of each element in the set of matched elements.
+         * @param {HTMLElement|HTMLElement[]|String} wrappedNodes set of matched elements
+         * @param {HTMLElement|String} wrapperNode html node or selector to get the node wrapper
+         */
+        wrapInner:function (wrapperNode, wrappedNodes) {
+            var wrap = getEl(wrapperNode);
+            var inner = getEl(wrappedNodes)[0];
+            S.each(wrap, function (w) {
+                var w_c = wrap.childNodes;
+                if (w_c.length) {
+                    INSERTION.wrapAll(w_c, inner);
+                } else {
+                    w.appendChild(inner)
+                }
+            })
         },
         /**
-        * Replace each element in the set of matched elements with the provided newNodes.
-        * @param {HTMLElement|HTMLElement[]|String} selector set of matched elements
-        * @param {HTMLElement|HTMLElement[]|String} newNodes new nodes to replace the matched elements
-        */
-        replaceWith: function (selector, newNodes) {
-        
+         * Remove the parents of the set of matched elements from the DOM,
+         * leaving the matched elements in their place.
+         * @param {HTMLElement|HTMLElement[]|String} wrappedNodes set of matched elements
+         */
+        unwrap:function (wrappedNodes) {
+            var inner = getEl(wrappedNodes);
+            S.each(inner,function(i){
+                var innerParent = i.parentNode;
+                INSERTION.replaceWith(innerParent, i.childNodes);
+            })
+        },
+        /**
+         * Replace each element in the set of matched elements with the provided newNodes.
+         * @param {HTMLElement|HTMLElement[]|String} selector set of matched elements
+         * @param {HTMLElement|HTMLElement[]|String} newNodes new nodes to replace the matched elements
+         */
+        replaceWith:function (selector, newNodes) {
+            var oldNodes = getEl(selector);
+            var newNodes = getEl(newNodes);
+            S.each(newNodes, function (n) {
+                n.parentNode.removeChild(n);
+            });
+            INSERTION.before(newNodes, oldNodes);
+            S.each(oldNodes, function (o) {
+                o.parentNode.removeChild(o);
+            });
         }
     }
     return INSERTION;
- })
+})
