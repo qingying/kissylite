@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=gbk"/>
+    <title></title>
+    <script src="http://a.tbcdn.cn/s/kissy/1.3.0/seed-min.js"></script>
+    <script src="../../dom/sub_module/04attr.js"></script>
+</head>
+<body>
+<div class="a b"></div>
+<div class="b a"></div>
+<div class="b a"></div>
+<div class="b c" style="">ggggggggggggggggg</div>
+<img src="http://www.taobao.com" />
+<input type="checkbox" />
+<script>
+    KISSY.use('dom/attr',function(S,DOM){
+        console.log(DOM.prop('input','readonly'));
+        
+        DOM.prop('input','checked','true');
+        
+        console.log(DOM.hasProp('img','src'));
+        
+        //DOM.removeProp('img','src');
+        console.log(DOM.attr('.c','css','width:20px;'));
+        console.log(DOM.hasAttr('.c','style'));
+        DOM.removeAttr('.c','css');
+        
+        console.log(DOM.val('input','3333'));
+        console.log(DOM.val('input'));
+        
+        DOM.text('.c','4444444444444')
+        console.log(DOM.text('.c'));
+    })
+</script>
+</body>
+</html>

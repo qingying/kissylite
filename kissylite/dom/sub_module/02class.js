@@ -5,19 +5,24 @@
 
 KISSY.add('dom/class', function (S) {
 
-    function getEl(selector) {
+    function getEl(selector, context) {
+        context = context || document.body;
+        //css selector
         if (selector && typeof(selector) == 'string') {
-            return document.body.querySelectorAll(selector);
+            selector = selector.replace(/^\s+|\s+$/g, '');
+            return context.querySelectorAll(selector);
         }
+        //node
         if (selector.nodeType && selector.nodeType == 1) {
             return [selector];
         }
-        if(selector.length && selector.length>0 && selector[0].nodeType && selector[0].nodeType==1){
+        //nodelist
+        if (selector.length && selector.length > 0 && selector[0].nodeType && selector[0].nodeType == 1) {
             return selector;
         }
         return [];
     }
-
+    
     function getClsArr(clsStr) {
         var arr = clsStr.split(' ');
         var newArr = [];
@@ -60,16 +65,16 @@ KISSY.add('dom/class', function (S) {
             var clsArr = getClsArr(classNames);
 
             if (els.length && els.length > 0) {
-                for (var i = 0; i < els.length; i++) {
-                    var bl = true;
+                var bl = true;
+                for (var i = 0; i < els.length; i++) { 
                     for (var j = 0; j < clsArr.length; j++) {
-                        if (els[i].nodeType && els[i].nodeType == 1 && !els[i].classList.contains(clsArr[i])) {
+                        if (els[i].nodeType && els[i].nodeType == 1 && !els[i].classList.contains(clsArr[j])) {
                             bl = false;
                         }
                     }
-                    if (bl) {
-                        return true;
-                    }
+                }
+                if (bl) {
+                    return true;
                 }
             }
 

@@ -3,11 +3,29 @@
  * @author tingbao.peng@gmail.com
  */
 KISSY.add('dom/create', function (S) {
-    var R_HTML = /<|&#?\w+;/;/*是否有html标签&#?\w+;后面这些有啥用*/
-    var RE_SIMPLE_TAG = /^<(\w+)\s*\/?>(?:<\/\1>)?$/; /*简单的标签(?:<\/\1>)?$后面这些有啥用,反斜杠加数字是啥意思*/
-    var RE_TAG = /<([\w:]+)/;/*冒号是干啥用的*/
+
+    function getEl(selector, context) {
+        context = context || document.body;
+        //css selector
+        if (selector && typeof(selector) == 'string') {
+            selector = selector.replace(/^\s+|\s+$/g, '');
+            return context.querySelectorAll(selector);
+        }
+        //node
+        if (selector.nodeType && selector.nodeType == 1) {
+            return [selector];
+        }
+        //nodelist
+        if (selector.length && selector.length > 0 && selector[0].nodeType && selector[0].nodeType == 1) {
+            return selector;
+        }
+        return [];
+    }
+    var R_HTML = /<|&#?\w+;/;/*是否有html标签或者html转义符号，例如&lt;之类的*/
+    var RE_SIMPLE_TAG = /^<(\w+)\s*\/?>(?:<\/\1>)?$/; /*匹配<a></a>,不匹配<a></b>*/
+    var RE_TAG = /<([\w:]+)/;/*匹配类似于<cms:custom>这样的标签*/
     var R_XHTML_TAG = /<(?!area|br|col|embed|hr|img|input|link|meta|param)(([\w:]+)[^>]*)\/>/ig;
-    
+    var creators={};
     var creatorsMap = {
             option: 'select',
             optgroup: 'select',
@@ -27,7 +45,7 @@ KISSY.add('dom/create', function (S) {
     for (p in creatorsMap) {
         (function (tag) {
             creators[p] = function (html, ownerDoc) {
-                return CREAT.create('<' + tag + '>' +
+                return CREATE.create('<' + tag + '>' +
                     html + '<' + '/' + tag + '>',
                     null, ownerDoc);
             };
@@ -35,9 +53,10 @@ KISSY.add('dom/create', function (S) {
     }
     
     function defaultCreator(html, ownerDoc) {
+        var doc = document;
         var frag = ownerDoc && ownerDoc != doc ?
-            ownerDoc.createElement(DIV) :
-            DEFAULT_DIV;
+            ownerDoc.createElement('div') :
+            doc.createElement('div');
         // html 为 <style></style> 时不行，必须有其他元素？
         frag.innerHTML = 'm<div>' + html + '<' + '/div>';
         return frag.lastChild;
@@ -47,11 +66,11 @@ KISSY.add('dom/create', function (S) {
     function attachProps(elem, props) {
         var ownerDoc = elem.ownerDocument;
         if (S.isPlainObject(props)) {
-            if (elem.nodeType == NodeType.ELEMENT_NODE) {
+            if (elem.nodeType == 1) {
                 setAttr(elem, props);
             }
             // document fragment
-            else if (elem.nodeType == NodeType.DOCUMENT_FRAGMENT_NODE) {
+            else if (elem.nodeType == 11) {
                 for(var i;i<elem.childNodes.length;i++){
                     setAttr(elem.childNodes[i], props);
                 }
@@ -60,7 +79,7 @@ KISSY.add('dom/create', function (S) {
         
         function setAttr(node,props){
             for(var p in props){
-                ownerDoc.setAttribute(node,p,props[p]);
+                node.setAttribute(p,props[p]);
             }
         }
         return elem;
@@ -84,20 +103,6 @@ KISSY.add('dom/create', function (S) {
         return ret;
     }
     
-    function getEl(selector) {
-        if (selector && typeof(selector) == 'string') {
-            return document.body.querySelectorAll(selector);
-        }
-        if (selector.nodeType && selector.nodeType == 1) {
-            return [selector];
-        }
-        if(selector.length && selector.length>0 && selector[0].nodeType && selector[0].nodeType==1){
-            return selector;
-        }
-        return null;
-    }
-    
-    
     function cleanData(el,isClearSelf) {
         var els = el.querySelectorAll('*');
         var DOMEvent = S.require('event/dom');
@@ -106,38 +111,17 @@ KISSY.add('dom/create', function (S) {
             if(isClearSelf){
                 DOMEvent.detach(el);
             }
-        }
-        
-        /*去除自定义属性*/
-        function removeChildrenData(els){
-            
-        }
-        
+        }             
     }
     // 克隆除了事件的 data
     function cloneWithDataAndEvent(src, dest) {
-    /*
-        var DOMEvent = S.require('event/dom'),
-            srcData,
-            d;
-
-        if (dest.nodeType == 1 && !DOM.hasData(src)) {
-            return;
-        }
-
-        srcData = DOM.data(src);
-
-        // 浅克隆，data 也放在克隆节点上
-        for (d in srcData) {
-            DOM.data(dest, d, srcData[d]);
-        }
+        var DOMEvent = S.require('event/dom');
 
         // 事件要特殊点
         if (DOMEvent) {
             // attach src 's event data and dom attached listener to dest
             DOMEvent.clone(src, dest);
         }
-     */
     }
     function processAll(fn, elem, clone) {
         var elemNodeType = elem.nodeType;
@@ -173,7 +157,7 @@ KISSY.add('dom/create', function (S) {
          * @return {HTMLElement}
          */
         create: function(html,props,ownerDoc){
-            var doc = ownerDoc || document;
+            var context = ownerDoc || document;
             var ret = null;
             var m,k,ta,holder,nodes;
             if(!html){
@@ -189,7 +173,6 @@ KISSY.add('dom/create', function (S) {
             if (!R_HTML.test(html)) {
                 ret = context.createTextNode(html);
             }else{
-                
                 if(m= RE_SIMPLE_TAG.exec(html)){
                     ret = context.createElement(m[1]);
                 }else{
@@ -199,14 +182,14 @@ KISSY.add('dom/create', function (S) {
                         tag = k.toLowerCase();
                     }
                     holder = (creators[tag] || defaultCreator)(html, context);
+                    nodes = holder.childNodes;
                     if (nodes.length === 1) {
                         // return single node, breaking parentNode ref from 'fragment'
-                        ret = nodes[0][PARENT_NODE].removeChild(nodes[0]);
+                        ret = nodes[0].parentNode.removeChild(nodes[0]);
                     } else if (nodes.length) {
                         // return multiple nodes as a fragment
                         ret = nodeListToFragment(nodes);
                     }
-                    
                 }
             }         
             return attachProps(ret, props);           
@@ -245,7 +228,6 @@ KISSY.add('dom/create', function (S) {
                     // faster
                     // fix #103,some html element can not be set through innerHTML
                     if (!htmlString.match(/<(?:script|style|link)/i)) {
-
                         try {
                             for (i = els.length - 1; i >= 0; i--) {
                                 elem = els[i];
@@ -263,11 +245,10 @@ KISSY.add('dom/create', function (S) {
                     }
 
                     if (!success) {
-                    /*
+                        el = els[0];
                         valNode = CREATE.create(htmlString, 0, el.ownerDocument, 0);
                         CREATE.empty(els);
-                        DOM.append(valNode, els, loadScripts);
-                    */
+                        el.appendChild(valNode);            
                     }
                 }
             },
@@ -295,27 +276,27 @@ KISSY.add('dom/create', function (S) {
                      return el.outerHTML
                 } else {
                     htmlString += '';
-                    if (!htmlString.match(/<(?:script|style|link)/i) && supportOuterHTML) {
+                    if (!htmlString.match(/<(?:script|style|link)/i)) {
                         for (i = length - 1; i >= 0; i--) {
                             el = els[i];
-                            if (el.nodeType == NodeType.ELEMENT_NODE) {
+                            if (el.nodeType == 1) {
                                 cleanData(el,true);
                                 el.outerHTML = htmlString;
                             }
                         }
                     } else {
-                        /*
-                        valNode = DOM.create(htmlString, 0, el.ownerDocument, 0);
-                        DOM.insertBefore(valNode, els, loadScripts);
-                        DOM.remove(els);
-                        */
+                        el = els[0];
+                        valNode = CREATE.create(htmlString, 0, el.ownerDocument, 0);
+                        el.parentNode.insertBefore(valNode, el);
+                        el.parentNode.removeChild(el);
+                        
                     }
                 }
             },
             /**
              * Remove the set of matched elements from the DOM.
              * @param {HTMLElement|String|HTMLElement[]} selector matched elements
-             * @param {Boolean} [keepData=false] whether keep bound events and jQuery data associated with the elements from removed.
+             * @param {Boolean} [keepData=false] whether keep bound events associated with the elements from removed.
              */
             remove: function (selector, keepData) {
                 var el,
@@ -329,9 +310,6 @@ KISSY.add('dom/create', function (S) {
                     if (!keepData && el.nodeType == 1) {
                         all = S.makeArray(el.querySelectorAll('*'));
                         all.push(el);
-                        /*
-                        DOM.removeData(all);
-                        */
                         if (DOMEvent) {
                             DOMEvent.detach(all);
                         }
@@ -361,11 +339,11 @@ KISSY.add('dom/create', function (S) {
                     deep = deep['deep'];
                 }
 
-                var elem = getEl(selector),
+                var elems = getEl(selector),
                     clone,
                     elemNodeType;
 
-                if (!elem) {
+                if (!elems) {
                     return null;
                 }
                 elem = elem[0];

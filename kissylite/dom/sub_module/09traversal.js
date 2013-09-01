@@ -7,13 +7,17 @@ KISSY.add('dom/traversal', function (S) {
     var matches = docElem.matches || docElem.webkitMatchesSelector || docElem.mozMatchesSelector;
 
     function getEl(selector, context) {
-        var doc = context || document.body;
+        context = context || document.body;
+        //css selector
         if (selector && typeof(selector) == 'string') {
-            return doc.querySelectorAll(selector);
+            selector = selector.replace(/^\s+|\s+$/g, '');
+            return context.querySelectorAll(selector);
         }
+        //node
         if (selector.nodeType && selector.nodeType == 1) {
             return [selector];
         }
+        //nodelist
         if (selector.length && selector.length > 0 && selector[0].nodeType && selector[0].nodeType == 1) {
             return selector;
         }

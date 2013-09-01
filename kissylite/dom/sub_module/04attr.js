@@ -3,14 +3,19 @@
  * @author tingbao.peng@gmail.com
  */
  KISSY.add('dom/attr', function (S) {
-    function getEl(selector) {
+    function getEl(selector, context) {
+        context = context || document.body;
+        //css selector
         if (selector && typeof(selector) == 'string') {
-            return document.body.querySelectorAll(selector);
+            selector = selector.replace(/^\s+|\s+$/g, '');
+            return context.querySelectorAll(selector);
         }
+        //node
         if (selector.nodeType && selector.nodeType == 1) {
             return [selector];
         }
-        if(selector.length && selector.length>0 && selector[0].nodeType && selector[0].nodeType==1){
+        //nodelist
+        if (selector.length && selector.length > 0 && selector[0].nodeType && selector[0].nodeType == 1) {
             return selector;
         }
         return [];
@@ -78,7 +83,7 @@
             } else {
             //getter
                 if (elems.length) {
-                    return elem[0][name];
+                    return elems[0][name];
                 }
             }
             return undefined;
@@ -90,7 +95,7 @@
         * @return {Boolean}
         */
         hasProp: function (selector, name) {
-            var elems = elems(selector);
+            var elems = getEl(selector);
             var i,
                 len = elems.length,
                 el;
@@ -143,7 +148,6 @@
 
             // supports hash
             if (S.isPlainObject(name)) {
-                pass = val;
                 for (var k in name) {
                     ATTR.attr(els, k, name[k]);
                 }
@@ -157,12 +161,6 @@
 
             name = name.toLowerCase();
 
-            if (pass && attrFn[name]) {
-                //return DOM[name](selector, val);
-            }
-
-            // custom attrs
-            name = attrFix[name] || name;
           
             //getter
             if (val === undefined) {
@@ -188,7 +186,6 @@
         */
         removeAttr: function (selector, name) {
             name = name.toLowerCase();
-            name = attrFix[name] || name;
             var els = getEl(selector),
                 propName,
                 el, i;
@@ -235,18 +232,17 @@
     
                     if (elem) {
                         ret = elem.value;
-    
-                        return typeof ret === 'string' ?
-                            // handle most common string cases
-                            ret.replace(R_RETURN, '') :
-                            // handle cases where value is null/undefined or number
-                            ret == null ? '' : ret;
+                        if(typeof ret === 'string'){
+                            ret.replace(/\r/g, '');
+                        }else if(ret===null){
+                            ret = '';
+                        }
+                        return ret;
                     }
     
                     return ret;
                 }
-    
-                
+                //setter
                 for (i = els.length - 1; i >= 0; i--) {
                     elem = els[i];
                     if (elem.nodeType !== 1) {
@@ -269,38 +265,42 @@
                 }
                 return undefined;
             },
-            /**
-             * Get the combined text contents of each element in the set of matched elements, including their descendants.
-             * or
-             * Set the content of each element in the set of matched elements to the specified text.
-             * @param {HTMLElement[]|HTMLElement|String} selector matched elements
-             * @param {String} [val] A string of text to set as the content of each matched element.
-             * @return {String|undefined}
-             */
-            text: function (selector, val) {
-                var el, els, i, nodeType;
-                els = getEl(selector);
-                // getter
-                if (val === undefined) {
-                    // supports css selector/Node/NodeList
-                    el = els[0];
-                    return el.textContent;
-                } else {
-                    //setter
-                    for (i = els.length - 1; i >= 0; i--) {
-                        el = els[i];
-                        nodeType = el.nodeType;
-                        if (nodeType == 1) {
-                            el.removeChildren(el.childNodes);
-                            el.appendChild(el.ownerDocument.createTextNode(val));
+        /**
+         * Get the combined text contents of each element in the set of matched elements, including their descendants.
+         * or
+         * Set the content of each element in the set of matched elements to the specified text.
+         * @param {HTMLElement[]|HTMLElement|String} selector matched elements
+         * @param {String} [val] A string of text to set as the content of each matched element.
+         * @return {String|undefined}
+         */
+        text: function (selector, val) {
+            var el, els, i, nodeType;
+            els = getEl(selector);
+            // getter
+            if (val === undefined) {
+                el = els[0];
+                return el.textContent;
+            } else {
+                //setter
+                for (i = els.length - 1; i >= 0; i--) {
+                    el = els[i];
+                    nodeType = el.nodeType;
+                    if (nodeType == 1) {
+                        if(el.childNodes){
+                            for(var m=0;m<el.childNodes.length;m++){
+                                el.removeChild(el.childNodes[m]);
+                            }
                         }
-                        else if (nodeType == 3 || nodeType == 4) {
-                            el.nodeValue = val;
-                        }
+                        
+                        el.appendChild(el.ownerDocument.createTextNode(val));
+                    }
+                    else if (nodeType == 3 || nodeType == 4) {
+                        el.nodeValue = val;
                     }
                 }
-                return undefined;
-            },
+            }
+            return undefined;
+        }
     };
     
     
