@@ -4,17 +4,60 @@
  */
 KISSY.add('dom/offset', function (S) {
     function getEl(selector, context) {
-        var doc = context || document.body;
+        context = context || document.body;
+        //css selector
         if (selector && typeof(selector) == 'string') {
-            return doc.querySelectorAll(selector);
+            selector = selector.replace(/^\s+|\s+$/g, '');
+            return context.querySelectorAll(selector);
         }
+        //node
         if (selector.nodeType && selector.nodeType == 1) {
             return [selector];
         }
+        //nodelist
         if (selector.length && selector.length > 0 && selector[0].nodeType && selector[0].nodeType == 1) {
             return selector;
         }
         return [];
+    }
+
+    function scroll(type) {
+        return function (selector, number) {
+            if (!isNaN(selector)) {
+                number = selector+'';
+                selector = window;
+            }
+            if (!selector) {
+                selector = window;
+            }
+            if (selector == window) {
+                if (!number) {
+                    var ret = type == 'left' ? window.scrollX : window.scrollY;
+                    return ret;
+                } else {
+                    var scrollNum = type == 'left' ? [number, window.scrollY] : [window.scrollX, number];
+                    window.scrollTo(scrollNum[0], scrollNum[1]);
+                }
+            } else {
+                var el = getEl(selector)[0];
+                if (!el) {
+                    return;
+                }
+                if (!number) {
+                    var num = type == 'left' ? el.scrollLeft : el.scrollTop;
+                    return num;
+                } else {
+                    if (type == 'left') {
+                        el.scrollLeft = number;
+                    } else {
+                        el.scrollTop = number;
+                    }
+                }
+
+
+            }
+        }
+
     }
 
     var OFFSET = {
@@ -27,12 +70,9 @@ KISSY.add('dom/offset', function (S) {
          * which are integers indicating the new top and left coordinates for the elements.
          * @param {Number} [coordinates.left ] the new top and left coordinates for the elements.
          * @param {Number} [coordinates.top ] the new top and top coordinates for the elements.
-         * @param {window} [relativeWin] The window to measure relative to. If relativeWin
-         *     is not in the ancestor frame chain of the element, we measure relative to
-         *     the top-most window.
          * @return {Object|undefined} if Get, the format of returned value is same with coordinates.
          */
-        offset:function (selector, coordinates, relativeWin) {
+        offset:function (selector, coordinates) {
             var els = getEl(selector),
                 el = els[0];
             var ret = {};
@@ -50,8 +90,17 @@ KISSY.add('dom/offset', function (S) {
                 var top = coordinates.top;
                 var left = coordinates.left;
                 for (var i = 0; i < els.length; i++) {
-                    els[i].style.left = left + 'px';
-                    els[i].style.top = top + 'px';
+                    var style = document.defaultView.getComputedStyle(els[i]);
+                    if (style.position == 'static') {
+                        var rect = els[i].getBoundingClientRect();
+                        els[i].style.position = 'relative';
+                        els[i].style.left = left - rect.left + 'px';
+                        els[i].style.top = top - rect.top + 'px';
+                    } else {
+                        els[i].style.left = left + 'px';
+                        els[i].style.top = top + 'px';
+                    }
+
                 }
             }
 
@@ -71,11 +120,11 @@ KISSY.add('dom/offset', function (S) {
          *        http://yiminghe.javaeye.com/blog/390732
          */
         scrollIntoView:function (selector, container, alignWithTop, allowHorizontalScroll) {
-            var el;
+            var el, onlyScrollIfNeeded;
             if (!(el = getEl(selector)[0])) {
                 return
             }
-            if (!(container = getEl(container)[0])) {
+            if (!container || !(container = getEl(container)[0])) {
                 container = el.ownerDocument.defaultView;
             }
             if (S.isPlainObject(alignWithTop)) {
@@ -84,7 +133,7 @@ KISSY.add('dom/offset', function (S) {
                 alignWithTop = alignWithTop.alignWithTop;
             }
             allowHorizontalScroll = allowHorizontalScroll === undefined ? true : allowHorizontalScroll;
-            
+
             var containerScroll,
                 ww,
                 wh;
@@ -92,114 +141,115 @@ KISSY.add('dom/offset', function (S) {
             var ew = elCss.width;
             var eh = elCss.height;
             var elOffset = {
-                left: el.getBoundingClientRect().left,
+                left:el.getBoundingClientRect().left,
                 top:el.getBoundingClientRect().top
             };
-            var diffTop,diffBottom,containerOffset;
-            if(container==window){
+            var diffTop, diffBottom, containerOffset;
+            if (container == window) {
                 ww = window.innerWidth;
                 wh = window.innerHieght;
                 containerScroll = {
-                    left: window.scrollX,
-                    top: window.scrollY
+                    left:window.scrollX,
+                    top:window.scrollY
                 };
                 diffTop = {
-                    left: elOffset.left - containerScroll.left,
-                    top: elOffset.top - containerScroll.top
+                    left:elOffset.left - containerScroll.left,
+                    top:elOffset.top - containerScroll.top
                 }
                 diffBottom = {
-                    left: el.Offset.left+ew - (containerScroll.left+ww),
-                    top: ellOffset.top+eh-(containerScroll.top+wh)
+                    left:elOffset.left + ew - (containerScroll.left + ww),
+                    top:elOffset.top + eh - (containerScroll.top + wh)
                 }
-            }else{
+            } else {
                 ww = container.getBoundingClientRect().width;
                 wh = container.getBoundingClientRect().height;
                 containerScroll = {
-                    left: container.getBoundingClientRect().left,
+                    left:container.getBoundingClientRect().left,
                     top:container.getBoundingClientRect().top
                 }
                 containerOffset = container.getBoundingClientRect();
                 containerCss = window.getComputedStyle(container);
                 diffTop = {
-                    left: elemOffset.left - (containerOffset.left +
+                    left:elOffset.left - (containerOffset.left +
                         (parseFloat(containerCss.borderLeftWidth) || 0)),
-                    top: elemOffset.top - (containerOffset.top +
-                        parseFloat(containerCss.borderLeftHeight)) || 0))
+                    top:elOffset.top - (containerOffset.top +
+                        (parseFloat(containerCss.borderTopWidth) || 0))
                 };
                 diffBottom = {
-                    left: elemOffset.left + ew -
-                        (containerOffset.left + cw +
+                    left:elOffset.left + ew -
+                        (containerOffset.left + ww +
                             (parseFloat(containerCss.borderLeftWidth) || 0)),
-                    top: elemOffset.top + eh -
-                        (containerOffset.top + ch +
-                            (parseFloat(containerCss.borderLeftHeight) || 0))
+                    top:elOffset.top + eh -
+                        (containerOffset.top + wh +
+                            (parseFloat(containerCss.borderTopWidth) || 0))
                 };
             }
             if (onlyScrollIfNeeded) {
-                    if (diffTop.top < 0 || diffBottom.top > 0) {
-                        // 强制向上
-                        if (alignWithTop === true) {
+                if (diffTop.top < 0 || diffBottom.top > 0) {
+                    // must  to top
+                    if (alignWithTop === true) {
+                        OFFSET.scrollTop(container, containerScroll.top + diffTop.top);
+                    } else if (alignWithTop === false) {
+                        OFFSET.scrollTop(container, containerScroll.top + diffBottom.top);
+                    } else {
+                        // show in view
+                        if (diffTop.top < 0) {
                             OFFSET.scrollTop(container, containerScroll.top + diffTop.top);
-                        } else if (alignWithTop === false) {
-                            OFFSET.scrollTop(container, containerScroll.top + diffBottom.top);
                         } else {
-                            // 自动调整
-                            if (diffTop.top < 0) {
-                                OFFSET.scrollTop(container, containerScroll.top + diffTop.top);
+                            OFFSET.scrollTop(container, containerScroll.top + diffBottom.top);
+                        }
+                    }
+                }
+            }
+            else {
+                alignWithTop = alignWithTop === undefined ? true : !!alignWithTop;
+                if (alignWithTop) {
+                    OFFSET.scrollTop(container, containerScroll.top + diffTop.top);
+                } else {
+                    OFFSET.scrollTop(container, containerScroll.top + diffBottom.top);
+                }
+            }
+
+            if (allowHorizontalScroll) {
+                if (onlyScrollIfNeeded) {
+                    if (diffTop.left < 0 || diffBottom.left > 0) {
+                        // must  to top
+                        if (alignWithTop === true) {
+                            OFFSET.scrollLeft(container, containerScroll.left + diffTop.left);
+                        } else if (alignWithTop === false) {
+                            OFFSET.scrollLeft(container, containerScroll.left + diffBottom.left);
+                        } else {
+                            // show in view
+                            if (diffTop.left < 0) {
+                                OFFSET.scrollLeft(container, containerScroll.left + diffTop.left);
                             } else {
-                                OFFSET.scrollTop(container, containerScroll.top + diffBottom.top);
+                                OFFSET.scrollLeft(container, containerScroll.left + diffBottom.left);
                             }
                         }
                     }
                 } else {
                     alignWithTop = alignWithTop === undefined ? true : !!alignWithTop;
                     if (alignWithTop) {
-                        OFFSET.scrollTop(container, containerScroll.top + diffTop.top);
+                        OFFSET.scrollLeft(container, containerScroll.left + diffTop.left);
                     } else {
-                        OFFSET.scrollTop(container, containerScroll.top + diffBottom.top);
+                        OFFSET.scrollLeft(container, containerScroll.left + diffBottom.left);
                     }
                 }
-
-                if (allowHorizontalScroll) {
-                    if (onlyScrollIfNeeded) {
-                        if (diffTop.left < 0 || diffBottom.left > 0) {
-                            // 强制向上
-                            if (alignWithTop === true) {
-                                OFFSET.scrollLeft(container, containerScroll.left + diffTop.left);
-                            } else if (alignWithTop === false) {
-                                OFFSET.scrollLeft(container, containerScroll.left + diffBottom.left);
-                            } else {
-                                // 自动调整
-                                if (diffTop.left < 0) {
-                                    OFFSET.scrollLeft(container, containerScroll.left + diffTop.left);
-                                } else {
-                                    OFFSET.scrollLeft(container, containerScroll.left + diffBottom.left);
-                                }
-                            }
-                        }
-                    } else {
-                        alignWithTop = alignWithTop === undefined ? true : !!alignWithTop;
-                        if (alignWithTop) {
-                            OFFSET.scrollLeft(container, containerScroll.left + diffTop.left);
-                        } else {
-                            OFFSET.scrollLeft(container, containerScroll.left + diffBottom.left);
-                        }
-                    }
-                }
+            }
         },
         /**
          * Get the width of document
          * @method
          */
         docWidth:function () {
-            return document.body.clientWidth();
+            return document.body.clientWidth;
         },
         /**
          * Get the height of document
          * @method
          */
         docHeight:function () {
-            return document.body.clientHeight();
+            return document.body.clientHeight;
         },
         /**
          * Get the height of window
@@ -224,24 +274,7 @@ KISSY.add('dom/offset', function (S) {
          * @param {Number} value An integer indicating the new position to set the scroll bar to.
          * @method
          */
-        scrollTop:function (selector, number) {
-            if (selector == window) {
-                if (!number) {
-                    return window.scrollY;
-                } else {
-                    window.scrollTo(0);
-                }
-            } else {
-                var el = getEl(selector)[0];
-                if (!el) {
-                    return;
-                }
-
-                var elTop = el.getBoundingClientRect().top;
-                return elTop + window.scrollY;
-
-            }
-        },
+        scrollTop:scroll('top'),
         /**
          * Get the current horizontal position of the scroll bar for the first element in the set of matched elements.
          * or
@@ -250,24 +283,7 @@ KISSY.add('dom/offset', function (S) {
          * @param {Number} value An integer indicating the new position to set the scroll bar to.
          * @method
          */
-        scrollLeft:function (selector, number) {
-            if (selector == window) {
-                if (!number) {
-                    return window.scrollX;
-                } else {
-                    window.scrollTo(0);
-                }
-            } else {
-                var el = getEl(selector)[0];
-                if (!el) {
-                    return;
-                }
-
-                var elTop = el.getBoundingClientRect().left;
-                return elTop + window.scrollX;
-
-            }
-        }
+        scrollLeft:scroll('left')
     };
 
     return OFFSET;

@@ -4,18 +4,57 @@
     <meta http-equiv="Content-Type" content="text/html; charset=gbk"/>
     <title></title>
     <script src="http://a.tbcdn.cn/s/kissy/1.3.0/seed-min.js"></script>
-    <script src="../../dom/sub_module/02class.js"></script>
+    <script src="../../dom/sub_module/05style.js"></script>
+    <style>
+        .a {
+            display: none;
+        }
+        .c {
+            display: inline;
+            border: 10px solid #f00;
+            margin: 30px;
+            padding: 20px;
+        }
+    </style>
 </head>
 <body>
 <div class="a b"></div>
 <div class="b a"></div>
 <div class="b a"></div>
 <div class="b"></div>
-
+<div class="c">vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv</div>
 <script>
-    KISSY.use('dom/class',function(S,DOM){
-        console.log(DOM.hasClass('div','a b'));
+    KISSY.use('dom/style',function(S,DOM){
+        console.log(DOM.style('.c','color'));
+        console.log(DOM.css('.c','color'));
+        DOM.style('.c','height','200');
+        DOM.style('.b','z-index','200');
+        DOM.css('.b','margin-top','200');
+
+        DOM.hide('.c');
+        DOM.show('.c');
+
+        DOM.toggle('.b');
+
+        DOM.addStyleSheet('body{color: #f000}','test');
+        DOM.addStyleSheet('body{background-color: #f000}','test');
+//        DOM.unselectable('.c');
+
+        console.log(DOM.css('.c','width'))
+        console.log(document.querySelectorAll('.c')[0].offsetWidth)
+
+        console.log(DOM.innerWidth('.c'))
+        console.log(DOM.innerHeight('.c'))
+
+        console.log(DOM.width('.c'))
+        console.log(DOM.height('.c'))
+
+        console.log(DOM.outerWidth('.c'))
+        console.log(DOM.outerHeight('.c'))
     })
+    KISSY.use('dom',function(){
+
+    });
 </script>
 </body>
 </html>

@@ -40,7 +40,7 @@ KISSY.add('dom/style', function (S) {
     var RE_MARGIN = /^margin/;
 
     function UA(name){
-        return navigator.useAgent.indexof(name)!=-1;
+        return navigator.userAgent.indexOf(name)!=-1;
     }
 
     function camelCase(name) {
@@ -52,8 +52,8 @@ KISSY.add('dom/style', function (S) {
     function style(elem, name, val) {
         var style,
             ret;
-
-        if (elem.nodeType === 3 || elem.nodeType === 8 || !(style = elem.style)) {
+        style = elem.style
+        if (elem.nodeType === 3 || elem.nodeType === 8 || !style) {
             return undefined;
         }
 
@@ -71,17 +71,8 @@ KISSY.add('dom/style', function (S) {
             else if (!isNaN(Number(val)) && !cssNumber[name]) {
                 val += 'px';
             }
-
-            if (val !== undefined) {
-                style[name] = val;
-                // #80 fix,font-family
-                if (val === '' && style.removeAttribute) {
-                    style.removeAttribute(name);
-                }
-            }
+            style[name] = val;
             if (!style.cssText) {
-                // weird for chrome, safari is ok?
-                // https://github.com/kissyteam/kissy/issues/231
                 UA.webkit && (style = elem.outerHTML);
                 elem.removeAttribute('style');
             }
@@ -114,7 +105,7 @@ KISSY.add('dom/style', function (S) {
             val = computedStyle.getPropertyValue(name) || computedStyle[name];
         }
 
-        // 还没有加入到 document，就取行内
+        //element not add on the document tree,get the inline style
         if (val === '' && !contains(d, elem)) {
             name = cssProps[name] || name;
             val = elem.style[name];
@@ -159,6 +150,34 @@ KISSY.add('dom/style', function (S) {
     function getNumber(str){
         return parseFloat(str);
     }
+    var custom_style = function(el,name){
+        var style = document.defaultView.getComputedStyle(el);
+        var value;
+        if(name=='width' || name=='height'){
+             value = getNumber(el[camelCase('offset-'+name)]);
+            if(name=='width'){
+                value = value - getNumber(style.paddingLeft)-getNumber(style.borderLeft)-getNumber(style.paddingRight)-getNumber(style.borderRight);
+            }else{
+                value = value - getNumber(style.paddingTop)-getNumber(style.borderTop)-getNumber(style.paddingBottom)-getNumber(style.borderBottom);
+            }
+            return value+'px';
+        }
+        if(name=='left' || name=='top'){
+            var position = style.position;
+            if(position=='static'){
+                return 'auto';
+            }else if(position=='relative'){
+                return '0px';
+            }else if(position=='fixed'){
+                var offset = el.getBoundingClientRect();
+                value = offset[name];
+            }else{
+                value = 0
+            }
+            return value+'px';
+        }
+        return value;
+    };
     var STYLE = {
         /**
          *  Get inline style property from the first element of matched elements
@@ -199,13 +218,13 @@ KISSY.add('dom/style', function (S) {
          * Get the computed value of a style property for the first element in the set of matched elements.
          * or
          * Set one or more CSS properties for the set of matched elements.
-         * @param {HTMLElement[]|String|HTMLElement} selector 选择器或节点或节点数组
+         * @param {HTMLElement[]|String|HTMLElement} selector
          * @param {String|Object} name A CSS property. or A map of property-value pairs to set.
          * @param [val] A value to set for the property.
          * @return {undefined|String}
          */
         css:function (selector, name, val) {
-            var els = getEl(selector),
+            var els = getEl(selector), 
                 elem = els[0],
                 k,
                 ret,
@@ -226,8 +245,11 @@ KISSY.add('dom/style', function (S) {
                 // supports css selector/Node/NodeList
                 ret = '';
                 if (elem) {
-                    ret = DOM._getComputedStyle(elem, name);
+                    ret = _getComputedStyle(elem, name);
                 }
+                if(ret=='auto'){
+                    ret = custom_style(elem,name);
+                };
                 return (typeof ret == 'undefined') ? '' : ret;
             }
             // setter
@@ -249,8 +271,9 @@ KISSY.add('dom/style', function (S) {
                 elem, i;
             for (i = els.length - 1; i >= 0; i--) {
                 elem = els[i];
-                // 可能元素还处于隐藏状态，比如 css 里设置了 display: none
-                if (STYLE.css(elem, 'display') === 'none') {
+                if(elem.style.display=='none'){
+                    elem.style.display='';
+                }else if (STYLE.css(elem, 'display') === 'none') {
                     tagName = elem.tagName.toLowerCase();
                     old = getDefaultDisplay(tagName);
                     elem.style.display = old;
@@ -323,7 +346,6 @@ KISSY.add('dom/style', function (S) {
                 elem = getEl('#' + id, doc)[0];
             }
 
-            // 仅添加一次，不重复添加
             if (elem) {
                 return;
             }
@@ -331,7 +353,6 @@ KISSY.add('dom/style', function (S) {
             elem = doc.createElement('style');
             elem.id = id;
 
-            // 先添加到 DOM 树中，再给 cssText 赋值，否则 css hack 会失效
             getEl('head', doc)[0].appendChild(elem);
             elem.appendChild(doc.createTextNode(cssText));
         },
@@ -349,9 +370,9 @@ KISSY.add('dom/style', function (S) {
                 elem = _els[j];
                 style = elem.style;
                 style['UserSelect'] = 'none';
-                if (UA['gecko']) {
+                if (UA('Gecko/')) {
                     style['MozUserSelect'] = 'none';
-                } else if (UA['webkit']) {
+                } else if (UA('AppleWebKit/')) {
                     style['WebkitUserSelect'] = 'none';
                 }
              }
@@ -367,10 +388,10 @@ KISSY.add('dom/style', function (S) {
                if(!el){
                    return 0;
                }
-              var style = _getComputedStyle(el);
-              var width = getNumber(style.getPerportyValue('width'));
-              var paddingLeft = getNumber(style.getPerportyValue('padding-left'));
-              var paddingRight = getNumber(style.getPerportyValue('padding-right'));
+              var style = document.defaultView.getComputedStyle(el);
+              var width = getNumber(STYLE.css(el,'width'));
+              var paddingLeft = getNumber(style.paddingLeft);
+              var paddingRight = getNumber(style.paddingRight);
              return width+paddingLeft+paddingRight;
         },
         /**
@@ -384,10 +405,10 @@ KISSY.add('dom/style', function (S) {
                if(!el){
                    return 0;
                }
-              var style = _getComputedStyle(el);
-              var width = getNumber(style.getPerportyValue('height'));
-              var paddingLeft = getNumber(style.getPerportyValue('padding-top'));
-              var paddingRight = getNumber(style.getPerportyValue('padding-bottom'));
+              var style =document.defaultView.getComputedStyle(el);
+              var width = getNumber(STYLE.css(el,'height'));
+              var paddingLeft = getNumber(style.paddingTop);
+              var paddingRight = getNumber(style.paddingBottom);
              return width+paddingLeft+paddingRight;
         },
         /**
@@ -402,14 +423,14 @@ KISSY.add('dom/style', function (S) {
               if(!el){
                   return 0;
               }
-             var style = _getComputedStyle(el);
-             var width = getNumber(style.getPerportyValue('width'));
-             var paddingLeft = getNumber(style.getPerportyValue('padding-left'));
-             var borderLeft = getNumber(style.getPerportyValue('border-left'));
-             var marginLeft = getNumber(style.getPerportyValue('margin-left'));
-             var paddingRight = getNumber(style.getPerportyValue('padding-right'));
-             var borderRight = getNumber(style.getPerportyValue('border-right'));
-             var marginRight = getNumber(style.getPerportyValue('margin-right'));
+             var style = document.defaultView.getComputedStyle(el);
+             var width = getNumber(STYLE.css(el,'width'));
+             var paddingLeft = getNumber(style.paddingLeft);
+             var paddingRight = getNumber(style.paddingRight);
+             var borderLeft = getNumber(style.borderLeft);
+             var borderRight = getNumber(style.borderRight);
+             var marginLeft = getNumber(style.marginLeft);
+             var marginRight = getNumber(style.marginRight);
             return width+paddingLeft+borderLeft+marginLeft+paddingRight+borderRight+marginRight;
         },
         /**
@@ -419,20 +440,20 @@ KISSY.add('dom/style', function (S) {
         * @param {Boolean} [includeMargin] A Boolean indicating whether to include the element's margin in the calculation.
         * @return {Number}
         */
-        outerHeight:function(){
+        outerHeight:function(selector){
             var el = getEl(selector)[0];
               if(!el){
                   return 0;
               }
-             var style = _getComputedStyle(el);
-             var height = getNumber(style.getPerportyValue('height'));
-             var paddingTop = getNumber(style.getPerportyValue('padding-top'));
-             var borderTop = getNumber(style.getPerportyValue('border-top'));
-             var marginTop = getNumber(style.getPerportyValue('margin-top'));
-             var paddingBottom = getNumber(style.getPerportyValue('padding-bottom'));
-             var borderBottom = getNumber(style.getPerportyValue('border-bottom'));
-             var marginBottom = getNumber(style.getPerportyValue('margin-bottom'));
-            return width+paddingTop+borderTop+marginTop+paddingBottom+borderBottom+marginBottom;
+             var style = document.defaultView.getComputedStyle(el);
+             var height = getNumber(STYLE.css(el,'height'));
+             var paddingTop = getNumber(style.paddingTop);
+             var borderTop = getNumber(style.borderTop);
+             var marginTop = getNumber(style.marginTop);
+             var paddingBottom = getNumber(style.paddingBottom);
+             var borderBottom = getNumber(style.borderBottom);
+             var marginBottom = getNumber(style.marginBottom);
+            return height+paddingTop+borderTop+marginTop+paddingBottom+borderBottom+marginBottom;
         },
         /**
         * Get the current computed width for the first element in the set of matched elements.
@@ -445,9 +466,8 @@ KISSY.add('dom/style', function (S) {
         * @return {Number|undefined}
         */
         width: function(selector,value){
-            var els = getEl(selector);
             var ret = STYLE.css(selector,'width',value);
-            return ret;
+            return getNumber(ret);
         },
         /**
         * Get the current computed height for the first element in the set of matched elements.
@@ -459,12 +479,10 @@ KISSY.add('dom/style', function (S) {
         * An integer representing the number of pixels, or an integer along with an optional unit of measure appended (as a string).
         * @return {Number|undefined}
         */
-        height: function(selector,height){
-            var els = getEl(selector);
+        height: function(selector,height,value){
             var ret = STYLE.css(selector,'height',value);
-            return ret;
+            return getNumber(ret);
         }
-
     };
 
     return STYLE;
