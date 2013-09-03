@@ -7,6 +7,9 @@ KISSY.add('dom/traversal', function (S) {
     var matches = docElem.matches || docElem.webkitMatchesSelector || docElem.mozMatchesSelector;
 
     function getEl(selector, context) {
+        if(!selector){
+            return [];
+        }
         context = context || document.body;
         //css selector
         if (selector && typeof(selector) == 'string') {
@@ -18,13 +21,31 @@ KISSY.add('dom/traversal', function (S) {
             return [selector];
         }
         //nodelist
-        if (selector.length && selector.length > 0 && selector[0].nodeType && selector[0].nodeType == 1) {
+        if (selector.length && selector[0] && selector[0].nodeType && selector[0].nodeType == 1) {
             return selector;
         }
         return [];
     }
 
+    function getNode(el, type) {
+        var ret = false;
+        var node = el[type];
+        while (node) {
+            if (node.nodeType != 1) {
+                node = node[type];
+            } else {
+                ret = node;
+                break;
+            }
+        }
+        return ret;
+    }
+
+
     function test(el, filter) {
+        if (el.nodeType != 1) {
+            return false;
+        }
         if (!filter) {
             return el;
         }
@@ -48,7 +69,7 @@ KISSY.add('dom/traversal', function (S) {
         if (!filter) {
             filter = 1;
         }
-        var ReNode = selector[type];
+        var ReNode = getNode(el, type);
         var index = 0
         while (ReNode && ReNode.nodeType != 11) {
             index++;
@@ -108,8 +129,12 @@ KISSY.add('dom/traversal', function (S) {
         first:function (selector, filter) {
             var el = getEl(selector)[0];
             var firstChild;
-            if (el) {
-                firstChild = el.firstChild;
+            if (!el) {
+                return null;
+            }
+            firstChild = el.firstChild;
+            if (firstChild.nodeType != 1) {
+                firstChild = getNode(firstChild, 'nextSibling');
             }
             if (!firstChild) {
                 return null
@@ -129,8 +154,12 @@ KISSY.add('dom/traversal', function (S) {
         last:function (selector, filter) {
             var el = getEl(selector)[0];
             var lastChild;
-            if (el) {
-                lastChild = el.lastChild;
+            if (!el) {
+                return null;
+            }
+            lastChild = el.lastChild;
+            if (lastChild.nodeType != 1) {
+                lastChild = getNode(lastChild, 'previousSibling');
             }
             if (!lastChild) {
                 return null
@@ -158,7 +187,7 @@ KISSY.add('dom/traversal', function (S) {
          * @return {HTMLElement}
          */
         prev:function (selector, filter) {
-            return getRelativeEl(selector, filter, 'nextSibling');
+            return getRelativeEl(selector, filter, 'previousSibling');
         },
         /**
          * Get the siblings of the first element in the set of matched elements, optionally filtered by a filter.
@@ -172,7 +201,7 @@ KISSY.add('dom/traversal', function (S) {
                 return [];
             }
             var parent = el.parentNode;
-            return getRelativeChildren(parent, 'filter', false, el)
+            return getRelativeChildren(parent, filter, false, el)
         },
         /**
          * Get the children of the first element in the set of matched elements, optionally filtered by a filter.
@@ -181,7 +210,7 @@ KISSY.add('dom/traversal', function (S) {
          * @return {HTMLElement[]}
          */
         children:function (selector, filter) {
-            return getRelativeChildren(selector, 'filter', false);
+            return getRelativeChildren(selector, filter, false);
         },
         /**
          * Get the childNodes of the first element in the set of matched elements (includes text and comment nodes),
@@ -216,10 +245,16 @@ KISSY.add('dom/traversal', function (S) {
             var el = getEl(selector)[0];
             var refer = getEl(refer);
             if (refer.length == 0) {
-                refer = el.parentNode.childNodes;
+                refer=[];
+                var children = el.parentNode.childNodes;
+                for(var i=0;i<children.length;i++){
+                    if(children[i].nodeType==1){
+                        refer.push(children[i]);
+                    }
+                }
             }
             for (var i = 0; i < refer.length; i++) {
-                if (refer[i].nodeType == 1 && refer[i] === refer) {
+                if (refer[i].nodeType == 1 && refer[i] === el) {
                     return i;
                 }
             }
@@ -238,7 +273,7 @@ KISSY.add('dom/traversal', function (S) {
             if (n1.length != n2.length) {
                 return false;
             }
-            for (var i = n1.length; i >= 0; i--) {
+            for (var i = 0;i<n1.length; i++) {
                 if (n1[i] != n2[i]) {
                     return false;
                 }

@@ -5,6 +5,9 @@
 
 KISSY.add('dom/style', function (S) {
     function getEl(selector, context) {
+        if (!selector) {
+            return [];
+        }
         context = context || document.body;
         //css selector
         if (selector && typeof(selector) == 'string') {
@@ -16,14 +19,15 @@ KISSY.add('dom/style', function (S) {
             return [selector];
         }
         //nodelist
-        if (selector.length && selector.length > 0 && selector[0].nodeType && selector[0].nodeType == 1) {
+        if (selector.length && selector[0] && selector[0].nodeType && selector[0].nodeType == 1) {
             return selector;
         }
         return [];
     }
+
     var cssProps = {
-            'float':'cssFloat'
-        };
+        'float':'cssFloat'
+    };
 
     var cssNumber = {
         'fillOpacity':1,
@@ -39,8 +43,8 @@ KISSY.add('dom/style', function (S) {
     var RE_NUM_NO_PX = new RegExp("^(" + RE_NUM + ")(?!px)[a-z%]+$", "i");
     var RE_MARGIN = /^margin/;
 
-    function UA(name){
-        return navigator.userAgent.indexOf(name)!=-1;
+    function UA(name) {
+        return navigator.userAgent.indexOf(name) != -1;
     }
 
     function camelCase(name) {
@@ -128,6 +132,7 @@ KISSY.add('dom/style', function (S) {
 
         return val;
     }
+
     var defaultDisplay = {};
 
     function getDefaultDisplay(tagName) {
@@ -147,34 +152,35 @@ KISSY.add('dom/style', function (S) {
         return oldDisplay;
     }
 
-    function getNumber(str){
+    function getNumber(str) {
         return parseFloat(str);
     }
-    var custom_style = function(el,name){
+
+    var custom_style = function (el, name) {
         var style = document.defaultView.getComputedStyle(el);
         var value;
-        if(name=='width' || name=='height'){
-             value = getNumber(el[camelCase('offset-'+name)]);
-            if(name=='width'){
-                value = value - getNumber(style.paddingLeft)-getNumber(style.borderLeft)-getNumber(style.paddingRight)-getNumber(style.borderRight);
-            }else{
-                value = value - getNumber(style.paddingTop)-getNumber(style.borderTop)-getNumber(style.paddingBottom)-getNumber(style.borderBottom);
+        if (name == 'width' || name == 'height') {
+            value = getNumber(el[camelCase('offset-' + name)]);
+            if (name == 'width') {
+                value = value - getNumber(style.paddingLeft) - getNumber(style.borderLeft) - getNumber(style.paddingRight) - getNumber(style.borderRight);
+            } else {
+                value = value - getNumber(style.paddingTop) - getNumber(style.borderTop) - getNumber(style.paddingBottom) - getNumber(style.borderBottom);
             }
-            return value+'px';
+            return value + 'px';
         }
-        if(name=='left' || name=='top'){
+        if (name == 'left' || name == 'top') {
             var position = style.position;
-            if(position=='static'){
+            if (position == 'static') {
                 return 'auto';
-            }else if(position=='relative'){
+            } else if (position == 'relative') {
                 return '0px';
-            }else if(position=='fixed'){
+            } else if (position == 'fixed') {
                 var offset = el.getBoundingClientRect();
                 value = offset[name];
-            }else{
+            } else {
                 value = 0
             }
-            return value+'px';
+            return value + 'px';
         }
         return value;
     };
@@ -224,7 +230,7 @@ KISSY.add('dom/style', function (S) {
          * @return {undefined|String}
          */
         css:function (selector, name, val) {
-            var els = getEl(selector), 
+            var els = getEl(selector),
                 elem = els[0],
                 k,
                 ret,
@@ -247,9 +253,10 @@ KISSY.add('dom/style', function (S) {
                 if (elem) {
                     ret = _getComputedStyle(elem, name);
                 }
-                if(ret=='auto'){
-                    ret = custom_style(elem,name);
-                };
+                if (ret == 'auto') {
+                    ret = custom_style(elem, name);
+                }
+                ;
                 return (typeof ret == 'undefined') ? '' : ret;
             }
             // setter
@@ -271,9 +278,9 @@ KISSY.add('dom/style', function (S) {
                 elem, i;
             for (i = els.length - 1; i >= 0; i--) {
                 elem = els[i];
-                if(elem.style.display=='none'){
-                    elem.style.display='';
-                }else if (STYLE.css(elem, 'display') === 'none') {
+                if (elem.style.display == 'none') {
+                    elem.style.display = '';
+                } else if (STYLE.css(elem, 'display') === 'none') {
                     tagName = elem.tagName.toLowerCase();
                     old = getDefaultDisplay(tagName);
                     elem.style.display = old;
@@ -375,112 +382,112 @@ KISSY.add('dom/style', function (S) {
                 } else if (UA('AppleWebKit/')) {
                     style['WebkitUserSelect'] = 'none';
                 }
-             }
+            }
         },
         /**
-        * Get the current computed width for the first element in the set of matched elements, including padding but not border.
-        * @method
-        * @param {HTMLElement[]|String|HTMLElement} selector Matched elements
-        * @return {Number}
-        */
-        innerWidth: function(selector){
-               var el = getEl(selector)[0];
-               if(!el){
-                   return 0;
-               }
-              var style = document.defaultView.getComputedStyle(el);
-              var width = getNumber(STYLE.css(el,'width'));
-              var paddingLeft = getNumber(style.paddingLeft);
-              var paddingRight = getNumber(style.paddingRight);
-             return width+paddingLeft+paddingRight;
-        },
-        /**
-        * Get the current computed height for the first element in the set of matched elements, including padding but not border.
-        * @method
-        * @param {HTMLElement[]|String|HTMLElement} selector Matched elements
-        * @return {Number}
-        */
-        innerHeight: function(selector){
+         * Get the current computed width for the first element in the set of matched elements, including padding but not border.
+         * @method
+         * @param {HTMLElement[]|String|HTMLElement} selector Matched elements
+         * @return {Number}
+         */
+        innerWidth:function (selector) {
             var el = getEl(selector)[0];
-               if(!el){
-                   return 0;
-               }
-              var style =document.defaultView.getComputedStyle(el);
-              var width = getNumber(STYLE.css(el,'height'));
-              var paddingLeft = getNumber(style.paddingTop);
-              var paddingRight = getNumber(style.paddingBottom);
-             return width+paddingLeft+paddingRight;
+            if (!el) {
+                return 0;
+            }
+            var style = document.defaultView.getComputedStyle(el);
+            var width = getNumber(STYLE.css(el, 'width'));
+            var paddingLeft = getNumber(style.paddingLeft);
+            var paddingRight = getNumber(style.paddingRight);
+            return width + paddingLeft + paddingRight;
         },
         /**
-        *  Get the current computed width for the first element in the set of matched elements, including padding and border, and optionally margin.
-        * @method
-        * @param {HTMLElement[]|String|HTMLElement} selector Matched elements
-        * @param {Boolean} [includeMargin] A Boolean indicating whether to include the element's margin in the calculation.
-        * @return {Number}
-        */
-        outerWidth: function(selector){
+         * Get the current computed height for the first element in the set of matched elements, including padding but not border.
+         * @method
+         * @param {HTMLElement[]|String|HTMLElement} selector Matched elements
+         * @return {Number}
+         */
+        innerHeight:function (selector) {
             var el = getEl(selector)[0];
-              if(!el){
-                  return 0;
-              }
-             var style = document.defaultView.getComputedStyle(el);
-             var width = getNumber(STYLE.css(el,'width'));
-             var paddingLeft = getNumber(style.paddingLeft);
-             var paddingRight = getNumber(style.paddingRight);
-             var borderLeft = getNumber(style.borderLeft);
-             var borderRight = getNumber(style.borderRight);
-             var marginLeft = getNumber(style.marginLeft);
-             var marginRight = getNumber(style.marginRight);
-            return width+paddingLeft+borderLeft+marginLeft+paddingRight+borderRight+marginRight;
+            if (!el) {
+                return 0;
+            }
+            var style = document.defaultView.getComputedStyle(el);
+            var width = getNumber(STYLE.css(el, 'height'));
+            var paddingLeft = getNumber(style.paddingTop);
+            var paddingRight = getNumber(style.paddingBottom);
+            return width + paddingLeft + paddingRight;
         },
         /**
-        * Get the current computed height for the first element in the set of matched elements, including padding, border, and optionally margin.
-        * @method
-        * @param {HTMLElement[]|String|HTMLElement} selector Matched elements
-        * @param {Boolean} [includeMargin] A Boolean indicating whether to include the element's margin in the calculation.
-        * @return {Number}
-        */
-        outerHeight:function(selector){
+         *  Get the current computed width for the first element in the set of matched elements, including padding and border, and optionally margin.
+         * @method
+         * @param {HTMLElement[]|String|HTMLElement} selector Matched elements
+         * @param {Boolean} [includeMargin] A Boolean indicating whether to include the element's margin in the calculation.
+         * @return {Number}
+         */
+        outerWidth:function (selector) {
             var el = getEl(selector)[0];
-              if(!el){
-                  return 0;
-              }
-             var style = document.defaultView.getComputedStyle(el);
-             var height = getNumber(STYLE.css(el,'height'));
-             var paddingTop = getNumber(style.paddingTop);
-             var borderTop = getNumber(style.borderTop);
-             var marginTop = getNumber(style.marginTop);
-             var paddingBottom = getNumber(style.paddingBottom);
-             var borderBottom = getNumber(style.borderBottom);
-             var marginBottom = getNumber(style.marginBottom);
-            return height+paddingTop+borderTop+marginTop+paddingBottom+borderBottom+marginBottom;
+            if (!el) {
+                return 0;
+            }
+            var style = document.defaultView.getComputedStyle(el);
+            var width = getNumber(STYLE.css(el, 'width'));
+            var paddingLeft = getNumber(style.paddingLeft);
+            var paddingRight = getNumber(style.paddingRight);
+            var borderLeft = getNumber(style.borderLeft);
+            var borderRight = getNumber(style.borderRight);
+            var marginLeft = getNumber(style.marginLeft);
+            var marginRight = getNumber(style.marginRight);
+            return width + paddingLeft + borderLeft + marginLeft + paddingRight + borderRight + marginRight;
         },
         /**
-        * Get the current computed width for the first element in the set of matched elements.
-        * or
-        * Set the CSS width of each element in the set of matched elements.
-        * @method
-        * @param {HTMLElement[]|String|HTMLElement} selector Matched elements
-        * @param {String|Number} [value]
-        * An integer representing the number of pixels, or an integer along with an optional unit of measure appended (as a string).
-        * @return {Number|undefined}
-        */
-        width: function(selector,value){
-            var ret = STYLE.css(selector,'width',value);
+         * Get the current computed height for the first element in the set of matched elements, including padding, border, and optionally margin.
+         * @method
+         * @param {HTMLElement[]|String|HTMLElement} selector Matched elements
+         * @param {Boolean} [includeMargin] A Boolean indicating whether to include the element's margin in the calculation.
+         * @return {Number}
+         */
+        outerHeight:function (selector) {
+            var el = getEl(selector)[0];
+            if (!el) {
+                return 0;
+            }
+            var style = document.defaultView.getComputedStyle(el);
+            var height = getNumber(STYLE.css(el, 'height'));
+            var paddingTop = getNumber(style.paddingTop);
+            var borderTop = getNumber(style.borderTop);
+            var marginTop = getNumber(style.marginTop);
+            var paddingBottom = getNumber(style.paddingBottom);
+            var borderBottom = getNumber(style.borderBottom);
+            var marginBottom = getNumber(style.marginBottom);
+            return height + paddingTop + borderTop + marginTop + paddingBottom + borderBottom + marginBottom;
+        },
+        /**
+         * Get the current computed width for the first element in the set of matched elements.
+         * or
+         * Set the CSS width of each element in the set of matched elements.
+         * @method
+         * @param {HTMLElement[]|String|HTMLElement} selector Matched elements
+         * @param {String|Number} [value]
+         * An integer representing the number of pixels, or an integer along with an optional unit of measure appended (as a string).
+         * @return {Number|undefined}
+         */
+        width:function (selector, value) {
+            var ret = STYLE.css(selector, 'width', value);
             return getNumber(ret);
         },
         /**
-        * Get the current computed height for the first element in the set of matched elements.
-        * or
-        * Set the CSS height of each element in the set of matched elements.
-        * @method
-        * @param {HTMLElement[]|String|HTMLElement} selector Matched elements
-        * @param {String|Number} [value]
-        * An integer representing the number of pixels, or an integer along with an optional unit of measure appended (as a string).
-        * @return {Number|undefined}
-        */
-        height: function(selector,height,value){
-            var ret = STYLE.css(selector,'height',value);
+         * Get the current computed height for the first element in the set of matched elements.
+         * or
+         * Set the CSS height of each element in the set of matched elements.
+         * @method
+         * @param {HTMLElement[]|String|HTMLElement} selector Matched elements
+         * @param {String|Number} [value]
+         * An integer representing the number of pixels, or an integer along with an optional unit of measure appended (as a string).
+         * @return {Number|undefined}
+         */
+        height:function (selector, height, value) {
+            var ret = STYLE.css(selector, 'height', value);
             return getNumber(ret);
         }
     };

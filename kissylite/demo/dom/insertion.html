@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=gbk"/>
+    <title></title>
+    <script src="http://a.tbcdn.cn/s/kissy/1.3.0/seed-min.js"></script>
+    <script src="../../dom/sub_module/07insertion.js"></script>
+    <style>
+        body {
+            height: 1000px;
+            width: 2000px;
+        }
+
+        div {
+            width: 20px;
+            height: 20px;
+        }
+
+        .c {
+            position: relative;
+            border: 10px solid #f00;
+            margin: 30px;
+            padding: 20px;
+            width: 400px;
+            height: 200px;
+            overflow: scroll;
+        }
+
+        .extra {
+            width: 200px;
+            height: 300px;
+        }
+
+        .inner {
+            border: 10px solid #ff0;
+            width: 2000px;
+            height: 200px;
+        }
+    </style>
+</head>
+<body>
+<div class="p">
+    <div class="a b m1"></div>
+    <div class="b a m2"></div>
+    <div class="b a m3"></div>
+    <div class="b m4"></div>
+</div>
+<div class="p2">
+    <div class="r e1">
+        <div class="ri"></div>
+    </div>
+    <div class="r e2">
+        <div class="ri"></div>
+    </div>
+    <div class="r e3">
+        <div class="ri"></div>
+    </div>
+    <div class="r e4">
+        <div class="ri"></div>
+    </div>
+</div>
+
+<div class="wrap">
+    <div></div>
+</div>
+
+<div class="extra"></div>
+<div class="inner">
+    vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
+</div>
+</div>
+
+<div class="newel new1"></div>
+<div class="newel new2"></div>
+<div class="newel new3"></div>
+<div class="newel2 new1"></div>
+<div class="newel2 new2"></div>
+<div class="newel2 new3"></div>
+
+<div class="newel3 new1"></div>
+<div class="newel3 new2"></div>
+
+<div class="newel4 new1"></div>
+<div class="newel4 new2"></div>
+
+<script>
+    KISSY.use('dom/insertion', function (S, DOM) {
+        DOM.before('.newel', '.b');
+        DOM.after('.newel2', '.b');
+
+
+        DOM.prepend('.newel4', '.b');
+        DOM.append('.newel3', '.b');
+
+        DOM.wrap('.r', '.wrap');
+//        DOM.unwrap('.r')
+
+
+    });
+    function getNode(el, type) {
+        var ret = false
+        var node = el[type];
+        while (node) {
+            if (node.nodeType != 1) {
+                node = el[type];
+            } else {
+                ret = node;
+                break;
+            }
+        }
+        return ret;
+    }
+
+
+</script>
+</body>
+</html>

@@ -4,6 +4,9 @@
  */
 KISSY.add('dom/offset', function (S) {
     function getEl(selector, context) {
+        if (!selector) {
+            return [];
+        }
         context = context || document.body;
         //css selector
         if (selector && typeof(selector) == 'string') {
@@ -15,7 +18,7 @@ KISSY.add('dom/offset', function (S) {
             return [selector];
         }
         //nodelist
-        if (selector.length && selector.length > 0 && selector[0].nodeType && selector[0].nodeType == 1) {
+        if (selector.length && selector[0] && selector[0].nodeType && selector[0].nodeType == 1) {
             return selector;
         }
         return [];
@@ -24,7 +27,7 @@ KISSY.add('dom/offset', function (S) {
     function scroll(type) {
         return function (selector, number) {
             if (!isNaN(selector)) {
-                number = selector+'';
+                number = selector + '';
                 selector = window;
             }
             if (!selector) {

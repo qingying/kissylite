@@ -1,20 +1,41 @@
 /**
-  *dom-offset
-  * @author tingbao.peng@gmail.com
-  */
+ *dom-offset
+ * @author tingbao.peng@gmail.com
+ */
 KISSY.add('dom/insertion', function (S) {
     function getEl(selector, context) {
-        var doc = context || document.body;
-        if (selector && typeof(selector) == 'string') {
-            return doc.querySelectorAll(selector);
+        if (!selector) {
+            return [];
         }
+        context = context || document.body;
+        //css selector
+        if (selector && typeof(selector) == 'string') {
+            selector = selector.replace(/^\s+|\s+$/g, '');
+            return context.querySelectorAll(selector);
+        }
+        //node
         if (selector.nodeType && selector.nodeType == 1) {
             return [selector];
         }
-        if (selector.length && selector.length > 0 && selector[0].nodeType && selector[0].nodeType == 1) {
+        //nodelist
+        if (selector.length && selector[0] && selector[0].nodeType && selector[0].nodeType == 1) {
             return selector;
         }
         return [];
+    }
+
+    function getNode(el, type) {
+        var ret = false;
+        var node = el[type];
+        while (node) {
+            if (node.nodeType != 1) {
+                node = node[type];
+            } else {
+                ret = node;
+                break;
+            }
+        }
+        return ret;
     }
 
     var R_SCRIPT_TYPE = /\/(java|ecma)script/i;
@@ -49,14 +70,13 @@ KISSY.add('dom/insertion', function (S) {
                             tmp.push(s);
                         }
                     }
-                    splice.apply(nodes, [i + 1, 0].concat(tmp));
+                    [].splice.apply(nodes, [i + 1, 0].concat(tmp));
                 }
                 ret.push(el);
             }
         }
         return ret;
     }
-
 
     // execute script
     function evalScript(el) {
@@ -70,7 +90,7 @@ KISSY.add('dom/insertion', function (S) {
         }
     }
 
-    function inserion(newNodes, refNodes, fun) {
+    function insertion(newNodes, refNodes, fun) {
         newNodes = getEl(newNodes);
         refNodes = getEl(refNodes);
 
@@ -80,13 +100,14 @@ KISSY.add('dom/insertion', function (S) {
         var scripts = [];
         filterScripts(newNodes, scripts);
         var i, j;
-        var fragment = createDocumentFragment();
+        var fragment = document.createDocumentFragment();
         for (j = 0; j < newNodes.length; j++) {
             fragment.appendChild(newNodes[j]);
         }
 
         for (i = 0; i < refNodes.length; i++) {
-            fun(fragment, refNodes[i]);
+            var newNode = fragment.cloneNode(true);
+            fun(newNode, refNodes[i]);
             if (scripts && scripts.length) {
                 S.each(scripts, evalScript);
             }
@@ -100,7 +121,7 @@ KISSY.add('dom/insertion', function (S) {
          * @param {HTMLElement|HTMLElement[]|String} refNodes Nodes to be referred
          */
         before:function (newNodes, refNodes) {
-            insertion(newNodes, refNodes, function (newNosw, refNode) {
+            insertion(newNodes, refNodes, function (newNode, refNode) {
                 refNode.parentNode.insertBefore(newNode, refNode);
             });
         },
@@ -110,12 +131,14 @@ KISSY.add('dom/insertion', function (S) {
          * @param {HTMLElement|HTMLElement[]|String} refNodes Nodes to be referred
          */
         after:function (newNodes, refNodes) {
-            insertion(newNodes, refNodes, function (newNosw, refNode) {
-                if (!refNode.parent) {
+            insertion(newNodes, refNodes, function (newNode, refNode) {
+                if (!refNode.parentNode) {
                     return;
                 }
-                if (refNode.nextsilbing) {
-                    refNode.parentNode.insertBefore(newNode, refNode.nextsilbing);
+                var sibling = getNode(refNode, 'nextSibling');
+
+                if (sibling) {
+                    refNode.parentNode.insertBefore(newNode, sibling);
                 } else {
                     refNode.parentNode.appendChild(newNode);
                 }
@@ -129,7 +152,7 @@ KISSY.add('dom/insertion', function (S) {
         append:function (newNodes, parents) {
             insertion(newNodes, parents, function (newNode, parent) {
                 parent.appendChild(newNode);
-            }, loadScripts);
+            });
         },
         /**
          * Insert every element in the set of newNodes to the beginning of every element in the set of parents.
@@ -138,7 +161,13 @@ KISSY.add('dom/insertion', function (S) {
          */
         prepend:function (newNodes, parents) {
             insertion(newNodes, parents, function (newNode, parent) {
-                parent.insertBefore(newNode, parent.firstChild);
+                var first = getNode(parent, 'firstChild');
+                if (first) {
+                    parent.insertBefore(newNode, first);
+                } else {
+                    parent.appendChild(newNode);
+                }
+
             });
         },
         /**
@@ -151,13 +180,12 @@ KISSY.add('dom/insertion', function (S) {
             var inners = getEl(wrappedNodes);
             if (inners[0].parentNode) {
                 inners[0].parentNode.insertBefore(wrap, inners[0]);
-                var fragment = createDocumentFragment();
+                var fragment = document.createDocumentFragment();
                 for (var j = 0; j < inners.length; j++) {
                     fragment.appendChild(inners[j]);
                 }
                 wrap.appendChild(fragment);
             }
-
         },
         /**
          * Wrap a node around all elements in the set of matched elements
@@ -181,12 +209,15 @@ KISSY.add('dom/insertion', function (S) {
             var wrap = getEl(wrapperNode);
             var inner = getEl(wrappedNodes)[0];
             S.each(wrap, function (w) {
-                var w_c = wrap.childNodes;
+                var w_c = w.childNodes;
                 if (w_c.length) {
-                    INSERTION.wrapAll(w_c, inner);
-                } else {
-                    w.appendChild(inner)
+                    var fragment = document.createDocumentFragment();
+                    for (var j = 0; j < w_c.length; j++) {
+                        fragment.appendChild(w_c[j]);
+                    }
+                    INSERTION.append(fragment, inner);
                 }
+                INSERTION.append(inner.cloneNode(true), w);
             })
         },
         /**
@@ -196,9 +227,11 @@ KISSY.add('dom/insertion', function (S) {
          */
         unwrap:function (wrappedNodes) {
             var inner = getEl(wrappedNodes);
-            S.each(inner,function(i){
-                var innerParent = i.parentNode;
-                INSERTION.replaceWith(innerParent, i.childNodes);
+            S.each(inner, function (i) {
+                var innerParent = getNode(i, 'parentNode');
+                var anchor = getNode(innerParent, 'parentNode');
+                INSERTION.append(i, anchor);
+                anchor.removeChild(innerParent);
             })
         },
         /**
@@ -217,6 +250,6 @@ KISSY.add('dom/insertion', function (S) {
                 o.parentNode.removeChild(o);
             });
         }
-    }
+    };
     return INSERTION;
 })

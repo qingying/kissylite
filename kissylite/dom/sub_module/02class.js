@@ -6,6 +6,9 @@
 KISSY.add('dom/class', function (S) {
 
     function getEl(selector, context) {
+        if (!selector) {
+            return [];
+        }
         context = context || document.body;
         //css selector
         if (selector && typeof(selector) == 'string') {
@@ -17,12 +20,12 @@ KISSY.add('dom/class', function (S) {
             return [selector];
         }
         //nodelist
-        if (selector.length && selector.length > 0 && selector[0].nodeType && selector[0].nodeType == 1) {
+        if (selector.length && selector[0] && selector[0].nodeType && selector[0].nodeType == 1) {
             return selector;
         }
         return [];
     }
-    
+
     function getClsArr(clsStr) {
         var arr = clsStr.split(' ');
         var newArr = [];
@@ -66,7 +69,7 @@ KISSY.add('dom/class', function (S) {
 
             if (els.length && els.length > 0) {
                 var bl = true;
-                for (var i = 0; i < els.length; i++) { 
+                for (var i = 0; i < els.length; i++) {
                     for (var j = 0; j < clsArr.length; j++) {
                         if (els[i].nodeType && els[i].nodeType == 1 && !els[i].classList.contains(clsArr[j])) {
                             bl = false;
