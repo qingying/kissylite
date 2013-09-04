@@ -1,0 +1,9 @@
+<?xml version="1.0"?>
+<project default="concatenate">
+    <target name="concatenate">
+        <concat destfile="dom.js">
+                <fileset dir="sub_module" includes="*.js" />
+                <fileset dir="." includes="base.js" />
+            </concat>
+    </target>
+</project>

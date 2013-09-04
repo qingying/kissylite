@@ -3,6 +3,7 @@
  * @author tingbao.peng@gmail.com
  */
 KISSY.add('dom/selector', function (S) {
+    var docElem = document.documentElement;
     var matches = docElem.matches || docElem.webkitMatchesSelector || docElem.mozMatchesSelector;
     function getSelector(selector, context, fun) {
         /*set body as the default context*/
