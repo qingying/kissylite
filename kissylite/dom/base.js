@@ -13,7 +13,9 @@ KISSY.add('dom/base', function (S,SELECTOR,CLASS,CREATE,ATTR,STYLE,OFFSET,INSERT
     S.mix(DOM, INSERTION);
     S.mix(DOM,TRAVERSAL);
 
-    return DOM;
+    S.mix(S,{
+        DOM:DOM
+    })
 },{
     requires:['dom/selector','dom/class','dom/create','dom/attr','dom/style','dom/offset','dom/insertion','dom/traversal']
 });
